@@ -1,82 +1,129 @@
-import Head from 'next/head'
+import { useState, useEffect } from 'react';
+import Link from 'next/link'
+
+import AssetCard from './components/AssetCard.jsx'
+import { fetch_assets, fetch_url_from_id, fetch_single_asset } from "./utils"
+
+type asset_contract = {
+  address: string,
+}
+
+type Asset = {
+  id: string,
+  name: string,
+  description: string,
+  image_url: string,
+  asset_contract: asset_contract,
+  token_id: string,
+  address: string,
+}
+
 
 export default function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+  const [ID, setID] = useState(74417323)
+  const [searchTerm, setSearchTerm] = useState<string>("")
+  const [asset, setAsset] = useState<Asset>({
+    id: "",
+    name: "",
+    description: "",
+    image_url: "",
+    asset_contract: { "address": "" },
+    token_id: "",
+    address: "",
+  })
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [isLoaded, setIsLoaded] = useState<Boolean>(false)
+  const [assetsSelection, setAssetsSelection] = useState<Asset[]>(assets)
 
-      <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
+  const getFromOpenSea = async () => {
+    const url = await fetch_url_from_id(ID);
+    const fetched_asset = await fetch_single_asset(url);
+    console.log(fetched_asset);
+    setAsset(fetched_asset)
+  }
 
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="p-3 font-mono text-lg bg-gray-100 rounded-md">
-            pages/index.tsx
-          </code>
-        </p>
+  const returnFilteredAssets = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.currentTarget.value
+    const filtered_assets = assets.filter(asset => {
+      return asset.name.toLowerCase().includes(term.toLowerCase())
+    })
+    if (term) { setAssetsSelection(filtered_assets) }
+    else { setAssetsSelection(assets) }
+  }
 
-        <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and API.
-            </p>
-          </a>
+  const loadStoreWithAssets = async () => {
+    setIsLoaded(false)
+    const res = await fetch_assets()
+    const data: Asset[] = res.assets
+    const asset = data.map((data) => ({
+      name: data.name,
+      id: data.id,
+      image_url: data.image_url,
+      description: data.description,
+      asset_contract: data.asset_contract,
+      token_id: data.token_id,
+      address: data.asset_contract.address + '/' + data.token_id
+    }))
+    setAssets([...assets, ...asset])
+    setAssetsSelection([...assets, ...asset])
+    console.log("Loaded assets to store: ", asset)
+    setIsLoaded(true)
+  }
+  useEffect(() => {
+    loadStoreWithAssets()
+  }, [])
 
-          <a
-            href="https://nextjs.org/learn"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
+  {
+    if (isLoaded) {
+      console.log(assets[0])
+      return (
+        <div className="">
+          <div className="flex gap-2">
+            <h1>{searchTerm}</h1>
+            <input
+              className="w-full rounded-md text-lg p-4 border-2 border-gray-200"
+              value={searchTerm}
+              onChange ={(e) => {
+                returnFilteredAssets(e)
+                setSearchTerm(e.target.value)
+              }}
+              placeholder="Search Pokemon"
+            />
+            <input
+              value={ID}
+              onChange={(e) => setID(parseInt(e.target.value))}
+              className="w-full rounded-md text-lg p-4 border-2 border-gray-200"
+              type="number"
+            />
+          </div>
+          <div className="py-4 grid gap-4 md:grid-cols-2 grid-cols-1">
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
+            {assetsSelection.map(asset => {
+              return (
+                <Link href="/profile/profile">
+                <a className="list-none p-6 bg-gray-100 text-gray-800 text-center rounded-md shadow-sm hover:shadow-md flex flex-col items-center"
+                  href={""} >
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+                  <img className="h-40 w-40 " src={asset.image_url} alt="" />
+
+                  <h2 className="uppercase text-2xl">{asset.name}</h2>
+
+                  <p className="text-sm">{asset.token_id}</p>
+
+                </a>
+                </Link>
+              )
+            })}
+          </div>
         </div>
-      </main>
-
-      <footer className="flex items-center justify-center w-full h-24 border-t">
-        <a
-          className="flex items-center justify-center"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="h-4 ml-2" />
-        </a>
-      </footer>
-    </div>
-  )
+      )
+    }
+    else {
+      return (
+        <div className="container">Loading</div>
+      )
+    }
+  }
 }
+
+
