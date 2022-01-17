@@ -7,7 +7,7 @@ Loads NFTs from OpenSea by collection or by ID and offers fast search functionna
 #todo
 Preview the example live on [](http://.com/):
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)]
+[![Open in StackBlitz]]
 
 
 ## How to use
