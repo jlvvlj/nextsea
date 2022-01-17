@@ -1,4 +1,4 @@
-# Next.js + Tailwind NFT fetching and showcase application
+# Next.js + Tailwind NFTs Search application
 
 Loads NFTs from OpenSea by collection or by ID and offers fast search functionnality
 
